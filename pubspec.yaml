@@ -1,0 +1,50 @@
+name: testtool
+description: "ToolBox —— 本地 HTML 工具箱：用大模型生成工具页面，粘贴导入即可使用。"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Material 组件的中文文案
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  # 路径拼接
+  path: ^1.9.0
+  # 状态管理（仅用最基础的 Notifier / Provider）
+  flutter_riverpod: ^2.6.1
+  # WebView：需要 baseUrl 支持，故选功能更全的 inappwebview
+  flutter_inappwebview: ^6.1.5
+  # 本地存储目录
+  path_provider: ^2.1.5
+  # 导出备份：系统分享
+  share_plus: ^10.1.4
+  # 导入备份：文件选择
+  file_picker: ^8.1.7
+  # ID 生成
+  uuid: ^4.5.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  # CI 里由 assets/icon/app_icon.png 生成 iOS AppIcon
+  flutter_launcher_icons: ^0.14.2
+
+# App 图标配置
+# 注意：assets/icon/app_icon.png 不入库，由 .github/workflows/ios.yml 现场生成，
+# 然后 dart run flutter_launcher_icons 写入 iOS 工程。
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  ios: true
+  remove_alpha_ios: true
+  android: false
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/prompts/

@@ -1,0 +1,12 @@
+[
+  {
+    "name": "标准 HTML 生成",
+    "isDefault": true,
+    "body": "你是一名资深前端工程师。请根据下面的需求，生成一个 iOS 移动端工具页面。\n\n【需求】\n{{requirement}}\n\n【输出要求】\n仅返回一个 JSON 对象，不要任何解释，不要 Markdown 代码块：\n{\n  \"name\": \"工具名称\",\n  \"html\": \"完整的单文件 HTML 字符串\"\n}\n\n【HTML 规范】\n1. 单文件自包含，CSS 与 JS 全部内联；\n2. 必须包含 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">；\n3. 使用 prefers-color-scheme 适配深色模式；\n4. 宽度 100%，无横向滚动，可点击元素不小于 44px；\n5. 大圆角、柔和阴影、系统字体（-apple-system, \"PingFang SC\"）；\n6. 底部预留 env(safe-area-inset-bottom) 安全区；\n7. 如需图表可按需引用 CDN 库（如 ECharts）；\n8. 首屏立即可用，不要出现一直转圈的加载动画。"
+  },
+  {
+    "name": "极简风格模板",
+    "isDefault": false,
+    "body": "请根据下面的需求，生成一个「扁平极简风」的移动端工具页面。\n\n【需求】\n{{requirement}}\n\n【输出要求】\n只返回一个 JSON 对象，不要解释、不要 Markdown 代码块：\n{\n  \"name\": \"工具名称\",\n  \"html\": \"完整的单文件 HTML 字符串\"\n}\n\n【设计规范】\n1. 单文件自包含，CSS 与 JS 内联；\n2. 配色只用黑白灰，浅色底 #FAFAFA、文字 #111，深色模式反转；\n3. 不用阴影和渐变，只用 1px 细线分隔与充足留白；\n4. 字号层次分明，正文 15px，标题 20px 加粗；\n5. 圆角 8px，按钮高 48px，占满宽度；\n6. 含 viewport meta，宽度 100%，无横向滚动；\n7. 适配 prefers-color-scheme 与底部安全区。"
+  }
+]

@@ -1,0 +1,303 @@
+name: Build iOS IPA (unsigned)
+
+# 只在手动触发时构建，避免一 push 就烧 CI 时间
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-ios:
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Flutter version
+        run: flutter --version
+
+      # 仓库里不含平台目录，这里现场生成（并保护 pubspec 不被覆盖）
+      - name: Generate iOS project
+        run: |
+          cp pubspec.yaml "$RUNNER_TEMP/pubspec.yaml.bak"
+          flutter create --platforms=ios --org com.testtool --project-name testtool .
+          cp "$RUNNER_TEMP/pubspec.yaml.bak" pubspec.yaml
+          # flutter create 会补一个引用 MyApp 的默认 widget 测试，会让 analyze 失败，删掉
+          rm -f test/widget_test.dart
+          ls test/
+
+      - name: iOS deployment target = 15.0
+        run: |
+          sed -i '' "s|^# platform :ios, .*|platform :ios, '15.0'|" ios/Podfile
+          sed -i '' "s|^platform :ios, .*|platform :ios, '15.0'|" ios/Podfile
+          sed -i '' "s|IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*|IPHONEOS_DEPLOYMENT_TARGET = 15.0|g" ios/Runner.xcodeproj/project.pbxproj
+          grep -n "platform :ios" ios/Podfile
+
+      - name: Bundle id and display name
+        run: |
+          sed -i '' "s|PRODUCT_BUNDLE_IDENTIFIER = com.testtool.testtool|PRODUCT_BUNDLE_IDENTIFIER = com.testtool.toolbox|g" ios/Runner.xcodeproj/project.pbxproj
+          /usr/libexec/PlistBuddy -c "Delete :CFBundleDisplayName" ios/Runner/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleDisplayName string ToolBox" ios/Runner/Info.plist
+
+      - name: Allow http/CDN resources (ATS)
+        run: |
+          /usr/libexec/PlistBuddy -c "Delete :NSAppTransportSecurity" ios/Runner/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" ios/Runner/Info.plist
+          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" ios/Runner/Info.plist
+
+      - name: Disable SwiftPM (use CocoaPods)
+        run: flutter config --no-enable-swift-package-manager || true
+
+      - name: Pub get
+        run: flutter pub get
+
+      # 早失败闸门：代码错误在这里就以明确文件行号报出来
+      - name: Analyze Dart
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      # 图标不入库，这里现场画一张 1024x1024 的 PNG（纯 Node，无第三方依赖）
+      - name: Generate app icon
+        run: |
+          cat > "$RUNNER_TEMP/generate_icon.js" <<'NODE_SCRIPT'
+          // ToolBox 图标生成器：Indigo→Purple 对角渐变 + 2x2 圆角方块（右下角描边=再加一个工具）
+          // 用法: node generate_icon.js [输出路径]
+          const fs = require('fs');
+          const path = require('path');
+          const zlib = require('zlib');
+
+          const OUT = process.argv[2] || 'assets/icon/app_icon.png';
+          const W = 1024, H = 1024;
+          const px = new Float32Array(W * H * 4);
+
+          const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+          const mix = (a, b, t) => a + (b - a) * t;
+
+          // 圆角矩形有符号距离场
+          function rrectSDF(x, y, cx, cy, hw, hh, r) {
+            const dx = Math.abs(x - cx) - hw + r;
+            const dy = Math.abs(y - cy) - hh + r;
+            const ax = Math.max(dx, 0), ay = Math.max(dy, 0);
+            return Math.sqrt(ax * ax + ay * ay) + Math.min(Math.max(dx, dy), 0) - r;
+          }
+          const cover = (d) => clamp(0.5 - d, 0, 1);      // 1px 抗锯齿
+          const soft = (d, s) => clamp(0.5 - d / s, 0, 1); // 柔和阴影
+
+          function blend(i, r, g, b, a) {
+            if (a <= 0) return;
+            const ia = 1 - a;
+            px[i] = px[i] * ia + r * a;
+            px[i + 1] = px[i + 1] * ia + g * a;
+            px[i + 2] = px[i + 2] * ia + b * a;
+            px[i + 3] = 1;
+          }
+
+          // 1) 对角渐变底
+          const C1 = [99 / 255, 102 / 255, 241 / 255];
+          const C2 = [168 / 255, 85 / 255, 247 / 255];
+          const C3 = [76 / 255, 29 / 255, 149 / 255];
+          for (let y = 0; y < H; y++) {
+            for (let x = 0; x < W; x++) {
+              const i = (y * W + x) * 4;
+              const t = clamp((x + y) / (W + H), 0, 1);
+              let r, g, b;
+              if (t < 0.72) {
+                const k = t / 0.72;
+                r = mix(C1[0], C2[0], k);
+                g = mix(C1[1], C2[1], k);
+                b = mix(C1[2], C2[2], k);
+              } else {
+                const k = (t - 0.72) / 0.28;
+                r = mix(C2[0], C3[0], k);
+                g = mix(C2[1], C3[1], k);
+                b = mix(C2[2], C3[2], k);
+              }
+              px[i] = r; px[i + 1] = g; px[i + 2] = b; px[i + 3] = 1;
+            }
+          }
+
+          // 2) 左上柔光
+          const hx = W * 0.26, hy = H * 0.16, hr = W * 0.78;
+          for (let y = 0; y < H; y++) {
+            for (let x = 0; x < W; x++) {
+              const d = Math.hypot(x - hx, y - hy) / hr;
+              if (d >= 1) continue;
+              blend((y * W + x) * 4, 1, 1, 1, 0.16 * (1 - d) * (1 - d));
+            }
+          }
+
+          // 3) 2x2 圆角方块
+          const CELL = 420, GAP = 54;
+          const M = (W - (CELL * 2 + GAP)) / 2;
+          const HW = CELL / 2, R = 96;
+          const centers = [
+            [M + HW, M + HW],
+            [M + CELL + GAP + HW, M + HW],
+            [M + HW, M + CELL + GAP + HW],
+            [M + CELL + GAP + HW, M + CELL + GAP + HW],
+          ];
+
+          // 阴影（整体下移）
+          for (let y = 0; y < H; y++) {
+            for (let x = 0; x < W; x++) {
+              let d = 1e9;
+              for (const c of centers) d = Math.min(d, rrectSDF(x, y - 18, c[0], c[1], HW, HW, R));
+              const a = soft(d, 46) * 0.22;
+              if (a > 0.001) blend((y * W + x) * 4, 0.06, 0.02, 0.18, a);
+            }
+          }
+
+          // 前三个实心
+          for (let y = 0; y < H; y++) {
+            for (let x = 0; x < W; x++) {
+              let a = 0;
+              for (let k = 0; k < 3; k++) {
+                a = Math.max(a, cover(rrectSDF(x, y, centers[k][0], centers[k][1], HW, HW, R)));
+              }
+              if (a > 0) blend((y * W + x) * 4, 1, 1, 1, a);
+            }
+          }
+
+          // 第四个描边
+          const STROKE = 46;
+          for (let y = 0; y < H; y++) {
+            for (let x = 0; x < W; x++) {
+              const d = rrectSDF(x, y, centers[3][0], centers[3][1], HW, HW, R);
+              const a = cover(Math.abs(d + STROKE / 2) - STROKE / 2);
+              if (a > 0) blend((y * W + x) * 4, 1, 1, 1, a);
+            }
+          }
+
+          // 4) 编码 PNG（全不透明，iOS 图标不允许带 alpha）
+          const crcTable = (() => {
+            const t = new Int32Array(256);
+            for (let n = 0; n < 256; n++) {
+              let c = n;
+              for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+              t[n] = c;
+            }
+            return t;
+          })();
+
+          function crc32(buf) {
+            let c = -1;
+            for (let i = 0; i < buf.length; i++) c = crcTable[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
+            return (c ^ -1) >>> 0;
+          }
+
+          function chunk(type, data) {
+            const len = Buffer.alloc(4);
+            len.writeUInt32BE(data.length, 0);
+            const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
+            const crc = Buffer.alloc(4);
+            crc.writeUInt32BE(crc32(body), 0);
+            return Buffer.concat([len, body, crc]);
+          }
+
+          const raw = Buffer.alloc(H * (W * 4 + 1));
+          let o = 0;
+          for (let y = 0; y < H; y++) {
+            raw[o++] = 0; // filter: none
+            for (let x = 0; x < W; x++) {
+              const i = (y * W + x) * 4;
+              raw[o++] = Math.round(clamp(px[i] * 255, 0, 255));
+              raw[o++] = Math.round(clamp(px[i + 1] * 255, 0, 255));
+              raw[o++] = Math.round(clamp(px[i + 2] * 255, 0, 255));
+              raw[o++] = 255;
+            }
+          }
+
+          const ihdr = Buffer.alloc(13);
+          ihdr.writeUInt32BE(W, 0);
+          ihdr.writeUInt32BE(H, 4);
+          ihdr[8] = 8;  // bit depth
+          ihdr[9] = 6;  // color type: RGBA
+
+          const png = Buffer.concat([
+            Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+            chunk('IHDR', ihdr),
+            chunk('IDAT', zlib.deflateSync(raw, { level: 9 })),
+            chunk('IEND', Buffer.alloc(0)),
+          ]);
+
+          fs.mkdirSync(path.dirname(OUT), { recursive: true });
+          fs.writeFileSync(OUT, png);
+          console.log('icon generated: ' + path.resolve(OUT) + ' (' + png.length + ' bytes)');
+          NODE_SCRIPT
+          node "$RUNNER_TEMP/generate_icon.js" assets/icon/app_icon.png
+          ls -lh assets/icon/
+
+      - name: Apply icon to iOS project
+        run: dart run flutter_launcher_icons
+
+      - name: Build (config only, no codesign)
+        run: flutter build ios --release --config-only --no-codesign
+
+      - name: Pod install
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: Xcodebuild (unsigned)
+        run: |
+          cd ios
+          xcodebuild \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath ../build/ios_dd \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package IPA
+        run: |
+          mkdir -p build/Payload
+          cp -R build/ios_dd/Build/Products/Release-iphoneos/Runner.app build/Payload/
+          cd build
+          zip -qry testtool.ipa Payload
+          ls -lh testtool.ipa
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: testtool-unsigned-ipa
+          path: build/testtool.ipa
+          if-no-files-found: error
+
+      - name: Publish to Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          VERSION=$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml | tr -d '\r' | head -n1)
+          TAG="v${VERSION//+/-}"
+          echo "tag = $TAG"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" build/testtool.ipa --clobber
+            gh release edit "$TAG" --latest
+          else
+            gh release create "$TAG" build/testtool.ipa \
+              --title "ToolBox $TAG" \
+              --generate-notes \
+              --latest
+          fi

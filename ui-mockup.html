@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ToolBox · UI 原型 v2</title>
+<style>
+  /* ================= 设计令牌 ================= */
+  :root{
+    --bg:#F5F5FA;
+    --bg-top:#EEEEF7;
+    --surface:#FFFFFF;
+    --surface-2:#FFFFFF;
+    --surface-3:#F2F2F8;
+    --text:#0B0B16;
+    --text2:#71718A;
+    --text3:#A5A5BC;
+    --line:rgba(11,11,22,.07);
+    --line-2:rgba(11,11,22,.11);
+    --a1:#6366F1;
+    --a2:#A855F7;
+    --a-soft:rgba(99,102,241,.10);
+    --a-text:#5B5BF0;
+    --success:#10B981;
+    --danger:#F43F5E;
+    --nav:rgba(250,250,255,.72);
+    --mask:rgba(12,12,24,.42);
+    --shadow-s:0 1px 2px rgba(11,11,22,.05), 0 4px 14px rgba(11,11,22,.05);
+    --shadow-m:0 6px 24px rgba(11,11,22,.09);
+    --shadow-a:0 8px 24px rgba(99,102,241,.32);
+    --r-l:26px; --r-m:18px; --r-s:13px;
+  }
+  body.dark{
+    --bg:#08080D;
+    --bg-top:#0C0C14;
+    --surface:#14141C;
+    --surface-2:#1B1B25;
+    --surface-3:#22222E;
+    --text:#F6F6FB;
+    --text2:#8E8EA6;
+    --text3:#5E5E78;
+    --line:rgba(255,255,255,.07);
+    --line-2:rgba(255,255,255,.12);
+    --a-soft:rgba(99,102,241,.18);
+    --a-text:#A5B4FC;
+    --nav:rgba(16,16,24,.72);
+    --mask:rgba(0,0,0,.6);
+    --shadow-s:0 1px 2px rgba(0,0,0,.4);
+    --shadow-m:0 8px 30px rgba(0,0,0,.5);
+    --shadow-a:0 8px 26px rgba(99,102,241,.4);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{
+    font-family:-apple-system,"SF Pro Display","SF Pro Text","PingFang SC",system-ui,sans-serif;
+    background:
+      radial-gradient(900px 500px at 12% -5%, rgba(99,102,241,.22), transparent 60%),
+      radial-gradient(700px 460px at 92% 8%, rgba(168,85,247,.16), transparent 62%),
+      #08080D;
+    color:#fff;padding:38px 26px 90px;min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ================= 页面外壳 ================= */
+  .page-head{
+    max-width:1480px;margin:0 auto 46px;display:flex;align-items:flex-end;
+    justify-content:space-between;flex-wrap:wrap;gap:20px;
+    border-bottom:1px solid rgba(255,255,255,.09);padding-bottom:26px;
+  }
+  .page-head h1{
+    font-size:27px;letter-spacing:-.6px;font-weight:700;
+    background:linear-gradient(100deg,#fff,#B9B9FF 60%,#E4B9FF);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .page-head p{color:rgba(255,255,255,.5);font-size:13.5px;margin-top:10px;line-height:1.7}
+  .page-head code{
+    background:rgba(255,255,255,.09);padding:1.5px 7px;border-radius:6px;
+    font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#C7C7FF;
+  }
+  .head-actions{display:flex;gap:10px}
+  .btn-toggle{
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#fff;
+    padding:11px 20px;border-radius:999px;font-size:13.5px;cursor:pointer;
+    font-family:inherit;transition:.18s;backdrop-filter:blur(10px);white-space:nowrap;
+  }
+  .btn-toggle:hover{background:rgba(255,255,255,.17);transform:translateY(-1px)}
+
+  .gallery{max-width:1480px;margin:0 auto;display:flex;flex-wrap:wrap;gap:58px 46px}
+  .item{display:flex;flex-direction:column;align-items:center;gap:16px}
+  .item .label{font-size:13px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:9px}
+  .item .label b{color:#fff;font-weight:600;font-size:14px;letter-spacing:-.2px}
+  .badge{
+    font-size:10.5px;padding:3px 9px;border-radius:999px;letter-spacing:.3px;
+    background:linear-gradient(135deg,rgba(99,102,241,.28),rgba(168,85,247,.28));
+    border:1px solid rgba(139,124,255,.35);color:#C9C6FF;font-weight:500;
+  }
+  .flow-note{
+    font-size:11.5px;color:rgba(255,255,255,.35);margin-top:-6px;letter-spacing:.2px;
+  }
+
+  /* ================= iPhone 外框 ================= */
+  .device{
+    width:358px;height:756px;flex:0 0 auto;border-radius:52px;background:#000;
+    padding:10px;position:relative;
+    box-shadow:0 0 0 1.5px #2b2b34, 0 30px 70px rgba(0,0,0,.65), 0 0 90px rgba(99,102,241,.10);
+  }
+  .screen{
+    width:100%;height:100%;border-radius:43px;overflow:hidden;
+    background:linear-gradient(180deg,var(--bg-top),var(--bg) 220px);
+    color:var(--text);display:flex;flex-direction:column;position:relative;
+    transition:background .25s,color .25s;
+  }
+  .notch{
+    position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    width:100px;height:25px;background:#000;border-radius:0 0 15px 15px;z-index:60;
+  }
+  .statusbar{
+    height:48px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+    padding:15px 27px 0;font-size:13px;font-weight:600;letter-spacing:.2px;z-index:50;position:relative;
+  }
+  .statusbar .icons{display:flex;align-items:center;gap:5px}
+  .statusbar svg{display:block}
+  .homebar{
+    position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+    width:116px;height:5px;border-radius:3px;background:var(--text);opacity:.82;z-index:55;
+  }
+
+  /* ================= 导航栏 ================= */
+  .navbar{
+    height:48px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+    padding:0 14px;background:var(--nav);
+    backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);
+    z-index:40;position:relative;
+  }
+  .navbar .title{font-size:16.5px;font-weight:650;letter-spacing:-.35px}
+  .nav-btn{
+    width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+    border-radius:12px;color:var(--text);cursor:pointer;transition:.15s;
+  }
+  .nav-btn:active{background:var(--surface-3);transform:scale(.94)}
+  .nav-btn.accent{color:var(--a-text)}
+  .nav-btn.ghost{visibility:hidden}
+
+  .content{flex:1;overflow-y:auto;overflow-x:hidden;position:relative}
+
+  /* ================= 工具渲染（示例：计算器） ================= */
+  .webview{padding:18px 16px 20px}
+  .calc{max-width:302px;margin:0 auto}
+  .calc-display{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);
+    padding:20px 18px;text-align:right;margin-bottom:14px;box-shadow:var(--shadow-s);
+  }
+  .calc-display .expr{font-size:13.5px;color:var(--text2);height:18px;letter-spacing:.2px}
+  .calc-display .val{
+    font-size:46px;font-weight:300;letter-spacing:-1.5px;margin-top:4px;
+    font-variant-numeric:tabular-nums;
+  }
+  .calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .calc-key{
+    aspect-ratio:1/1;border-radius:20px;display:flex;align-items:center;justify-content:center;
+    font-size:21px;background:var(--surface);border:1px solid var(--line);color:var(--text);
+    cursor:pointer;user-select:none;transition:.12s;box-shadow:var(--shadow-s);
+  }
+  .calc-key:active{transform:scale(.93)}
+  .calc-key.op{
+    background:linear-gradient(140deg,var(--a1),var(--a2));color:#fff;border:none;
+    box-shadow:var(--shadow-a);font-weight:500;
+  }
+  .calc-key.fn{background:var(--surface-3);border-color:transparent;font-weight:600;font-size:19px}
+  .calc-key.wide{grid-column:span 2;aspect-ratio:auto;border-radius:20px}
+
+  /* ================= 空状态 ================= */
+  .empty{
+    height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:16px;padding:0 44px;text-align:center;
+  }
+  .empty .glyph{
+    width:92px;height:92px;border-radius:30px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(140deg,rgba(99,102,241,.16),rgba(168,85,247,.16));
+    border:1px solid rgba(139,124,255,.22);
+  }
+  .empty h3{font-size:19px;font-weight:650;letter-spacing:-.4px}
+  .empty p{font-size:13.5px;color:var(--text2);line-height:1.65}
+
+  /* ================= 底部新建按钮 ================= */
+  .bottom-bar{
+    flex:0 0 auto;padding:10px 16px 30px;z-index:38;
+    background:linear-gradient(180deg,transparent,var(--bg) 42%);
+  }
+  .btn-new{
+    height:52px;border-radius:17px;display:flex;align-items:center;justify-content:center;gap:8px;
+    font-size:16px;font-weight:600;color:#fff;letter-spacing:-.2px;cursor:pointer;
+    background:linear-gradient(135deg,var(--a1),var(--a2));
+    box-shadow:var(--shadow-a);transition:.15s;
+  }
+  .btn-new:active{transform:scale(.975);filter:brightness(1.06)}
+
+  /* 通用按钮 */
+  .btn{
+    height:50px;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:7px;
+    font-size:15.5px;font-weight:600;cursor:pointer;user-select:none;transition:.15s;
+    border:none;font-family:inherit;letter-spacing:-.2px;
+  }
+  .btn:active{transform:scale(.975)}
+  .btn-grad{
+    background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;box-shadow:var(--shadow-a);
+  }
+  .btn-grad:active{filter:brightness(1.07)}
+  .btn-soft{background:var(--surface-3);color:var(--text);border:1px solid var(--line)}
+  .btn-ghost{background:transparent;color:var(--a-text)}
+
+  /* ================= 侧边栏 ================= */
+  .overlay{position:absolute;inset:0;z-index:70;display:flex;background:var(--mask);backdrop-filter:blur(3px)}
+  .sidebar{
+    width:79%;max-width:302px;height:100%;background:var(--surface);
+    border-radius:0 30px 30px 0;display:flex;flex-direction:column;overflow:hidden;
+    box-shadow:14px 0 44px rgba(0,0,0,.28);
+    animation:slideIn .3s cubic-bezier(.32,.72,0,1);
+  }
+  @keyframes slideIn{from{transform:translateX(-100%)}to{transform:translateX(0)}}
+  .sidebar-head{padding:56px 20px 14px;display:flex;align-items:center;justify-content:space-between}
+  .sidebar-head h2{font-size:29px;font-weight:700;letter-spacing:-.9px}
+  .count-pill{
+    font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;
+    background:var(--a-soft);color:var(--a-text);
+  }
+  .search{
+    margin:0 16px 14px;height:40px;border-radius:13px;background:var(--surface-3);
+    display:flex;align-items:center;gap:8px;padding:0 12px;color:var(--text3);font-size:14.5px;
+    border:1px solid transparent;
+  }
+  .tool-list{flex:1;overflow-y:auto;padding:0 12px 12px}
+  .group-title{
+    font-size:11.5px;color:var(--text3);padding:10px 8px 8px;letter-spacing:.6px;
+    font-weight:600;text-transform:uppercase;
+  }
+  .tool-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 14px;height:48px;font-size:15.5px;cursor:pointer;border-radius:13px;
+    letter-spacing:-.2px;transition:.14s;margin-bottom:2px;
+  }
+  .tool-row:active{background:var(--surface-3)}
+  .tool-row.active{
+    background:linear-gradient(135deg,rgba(99,102,241,.14),rgba(168,85,247,.10));
+    color:var(--a-text);font-weight:650;
+  }
+  .tool-row .dot{
+    width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,var(--a1),var(--a2));
+    opacity:0;transition:.15s;
+  }
+  .tool-row.active .dot{opacity:1}
+  .swipe-row{position:relative;overflow:hidden;border-radius:13px;margin-bottom:2px;height:48px}
+  .swipe-row .del{
+    position:absolute;right:0;top:0;bottom:0;width:84px;
+    background:linear-gradient(135deg,#FB5A75,var(--danger));color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;
+  }
+  .swipe-row .front{
+    position:relative;height:48px;transform:translateX(-84px);background:var(--surface-3);
+    display:flex;align-items:center;transition:.2s;border-radius:13px;
+  }
+  .sidebar-foot{padding:12px 16px 30px;border-top:1px solid var(--line)}
+
+  /* ================= Sheet ================= */
+  .sheet-wrap{position:absolute;inset:0;z-index:80;background:var(--mask);display:flex;align-items:flex-end;backdrop-filter:blur(2px)}
+  .sheet{
+    width:100%;background:var(--surface);border-radius:30px 30px 0 0;
+    display:flex;flex-direction:column;height:92%;overflow:hidden;
+    animation:sheetUp .34s cubic-bezier(.32,.72,0,1);box-shadow:0 -14px 44px rgba(0,0,0,.26);
+  }
+  @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .grabber{width:38px;height:5px;border-radius:3px;background:var(--line-2);margin:9px auto 0}
+  .sheet-nav{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 18px 14px;
+  }
+  .sheet-nav .t{font-size:17px;font-weight:680;letter-spacing:-.4px}
+  .sheet-nav .a{font-size:15.5px;color:var(--a-text);cursor:pointer;font-weight:500}
+  .sheet-nav .a.dim{color:var(--text2)}
+  .sheet-nav .a.strong{font-weight:650}
+
+  /* 步骤条 */
+  .steps{display:flex;align-items:center;padding:0 22px 20px;gap:0}
+  .step{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;width:56px}
+  .step i{
+    width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:12.5px;font-weight:700;font-style:normal;
+    background:var(--surface-3);color:var(--text3);transition:.2s;
+  }
+  .step span{font-size:10.5px;color:var(--text3);font-weight:500}
+  .step.active i{background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;box-shadow:0 4px 12px rgba(99,102,241,.4)}
+  .step.active span{color:var(--a-text);font-weight:650}
+  .step.done i{background:var(--a-soft);color:var(--a-text)}
+  .step.done span{color:var(--text2)}
+  .sline{flex:1;height:2px;border-radius:1px;background:var(--line-2);margin-top:-18px}
+  .sline.done{background:linear-gradient(90deg,var(--a1),var(--a2))}
+
+  .form{padding:0 18px 26px;overflow-y:auto;flex:1}
+  .field-label{
+    font-size:12.5px;color:var(--text2);margin:0 0 8px 3px;font-weight:600;
+    letter-spacing:.2px;
+  }
+  .field{
+    background:var(--surface-3);border-radius:var(--r-m);padding:15px 16px;font-size:15.5px;
+    margin-bottom:18px;border:1px solid transparent;letter-spacing:-.2px;
+  }
+  .paste-area{
+    background:var(--surface-3);border-radius:var(--r-m);padding:14px 15px;
+    font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11.5px;line-height:1.7;
+    color:var(--text2);min-height:172px;word-break:break-all;white-space:pre-wrap;
+    margin-bottom:14px;
+  }
+  .paste-area .k{color:#A855F7}
+  .paste-area .s{color:#10B981}
+  .hint{
+    display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--text2);
+    line-height:1.6;background:var(--a-soft);padding:12px 13px;border-radius:14px;margin-bottom:16px;
+  }
+  .hint b{color:var(--a-text)}
+  .hint svg{flex:0 0 auto;margin-top:1px}
+
+  /* 复制成功卡 */
+  .copied-card{
+    display:flex;align-items:center;gap:13px;padding:15px;border-radius:var(--r-m);
+    background:linear-gradient(135deg,rgba(99,102,241,.13),rgba(168,85,247,.09));
+    border:1px solid rgba(139,124,255,.22);margin-bottom:18px;
+  }
+  .copied-card .ico{
+    width:40px;height:40px;border-radius:13px;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--a1),var(--a2));
+    display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-a);
+  }
+  .copied-card h4{font-size:14px;font-weight:650;letter-spacing:-.2px}
+  .copied-card p{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.5}
+
+  /* ================= 设置列表 ================= */
+  .list-title{
+    font-size:11.5px;color:var(--text3);padding:0 22px 8px;letter-spacing:.6px;
+    font-weight:600;text-transform:uppercase;
+  }
+  .list-group{margin:20px 0 0}
+  .list-card{
+    background:var(--surface);border-radius:var(--r-m);margin:0 16px;overflow:hidden;
+    border:1px solid var(--line);box-shadow:var(--shadow-s);
+  }
+  .cell{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:0 16px;height:52px;font-size:15.5px;position:relative;cursor:pointer;letter-spacing:-.2px;
+  }
+  .cell:active{background:var(--surface-3)}
+  .cell .r{display:flex;align-items:center;gap:8px;color:var(--text2);font-size:14px}
+  .cell .sep{position:absolute;left:16px;right:0;bottom:0;height:1px;background:var(--line)}
+  .cell:last-child .sep{display:none}
+  .cell.danger{color:var(--danger)}
+  .cell.add{justify-content:center;color:var(--a-text);font-weight:600}
+  .tag{
+    font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:7px;letter-spacing:.2px;
+    background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(168,85,247,.18));color:var(--a-text);
+  }
+  .back{display:flex;align-items:center;gap:3px;color:var(--a-text);font-size:16px;cursor:pointer;font-weight:500}
+
+  .editor{
+    flex:1;margin:0 16px 16px;background:var(--surface);border-radius:var(--r-m);padding:15px;
+    font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11.5px;line-height:1.75;
+    white-space:pre-wrap;overflow-y:auto;border:1px solid var(--line);color:var(--text2);
+    box-shadow:var(--shadow-s);
+  }
+  .editor .var{color:#A855F7;font-weight:700}
+  .editor .hl{color:var(--text);font-weight:600}
+
+  .preview-wrap{
+    position:absolute;inset:0;z-index:85;display:flex;flex-direction:column;
+    background:linear-gradient(180deg,var(--bg-top),var(--bg) 220px);
+    animation:sheetUp .3s cubic-bezier(.32,.72,0,1);
+  }
+  .toast{
+    position:absolute;left:50%;bottom:136px;transform:translateX(-50%);
+    background:rgba(18,18,26,.9);backdrop-filter:blur(16px);color:#fff;
+    font-size:13px;padding:11px 19px;border-radius:999px;display:flex;align-items:center;gap:8px;
+    z-index:99;white-space:nowrap;box-shadow:0 10px 30px rgba(0,0,0,.35);
+    border:1px solid rgba(255,255,255,.12);font-weight:500;
+  }
+</style>
+</head>
+<body>
+<div class="page-head">
+  <div>
+    <h1>ToolBox · iOS UI 原型 v2</h1>
+    <p>
+      流程：启动即渲染第一个工具 · 侧边栏底部 <code>＋新建工具</code> → 单 Sheet 内 <b style="color:#C9C6FF">需求 → 复制提示词 → 粘贴导入 → 预览 → 应用</b><br>
+      风格：现代渐变主色（Indigo → Purple）· 悬浮卡片 · 大圆角 · 玻璃拟态导航
+    </p>
+  </div>
+  <div class="head-actions">
+    <button class="btn-toggle" onclick="document.body.classList.toggle('dark')">🌗 切换深色模式</button>
+  </div>
+</div>
+
+<div class="gallery">
+
+  <!-- ========== ① 主页 · 默认渲染第一个工具 ========== -->
+  <div class="item">
+    <div class="label"><b>① 主页</b><span class="badge">默认展示第一个工具</span></div>
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>9:41</span>
+        <span class="icons">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 8.2 5.6 6.4a3.7 3.7 0 0 1 4.8 0L8 8.2zM3.4 4.6 1.2 2.9a10.5 10.5 0 0 1 13.6 0l-2.2 1.7a7.9 7.9 0 0 0-9.2 0z"/></svg>
+          <svg width="25" height="11" viewBox="0 0 25 11"><rect x=".5" y=".5" width="21" height="10" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="16" height="7" rx="1.5" fill="currentColor"/><path d="M23 4v3a2 2 0 0 0 0-3z" fill="currentColor" opacity=".5"/></svg>
+        </span>
+      </div>
+      <div class="navbar">
+        <div class="nav-btn">
+          <svg width="19" height="14" viewBox="0 0 20 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1.5h18M1 7.5h18M1 13.5h18"/></svg>
+        </div>
+        <div class="title">计算器</div>
+        <div class="nav-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </div>
+      </div>
+      <div class="content">
+        <div class="webview"><div class="calc">
+          <div class="calc-display"><div class="expr">128 × 4</div><div class="val">512</div></div>
+          <div class="calc-grid">
+            <div class="calc-key fn">AC</div><div class="calc-key fn">±</div>
+            <div class="calc-key fn">%</div><div class="calc-key op">÷</div>
+            <div class="calc-key">7</div><div class="calc-key">8</div>
+            <div class="calc-key">9</div><div class="calc-key op">×</div>
+            <div class="calc-key">4</div><div class="calc-key">5</div>
+            <div class="calc-key">6</div><div class="calc-key op">−</div>
+            <div class="calc-key">1</div><div class="calc-key">2</div>
+            <div class="calc-key">3</div><div class="calc-key op">+</div>
+            <div class="calc-key wide">0</div><div class="calc-key">.</div>
+            <div class="calc-key op">=</div>
+          </div>
+        </div></div>
+      </div>
+      <div style="height:28px;flex:0 0 auto"></div>
+      <div class="homebar"></div>
+    </div></div>
+    <div class="flow-note">打开 App 直接可用 · 新建入口仅在侧边栏底部</div>
+  </div>
+
+  <!-- ========== ② 主页 · 空状态 ========== -->
+  <div class="item">
+    <div class="label"><b>② 首次启动空状态</b><span class="badge">Empty</span></div>
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>9:41</span>
+        <span class="icons">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 8.2 5.6 6.4a3.7 3.7 0 0 1 4.8 0L8 8.2zM3.4 4.6 1.2 2.9a10.5 10.5 0 0 1 13.6 0l-2.2 1.7a7.9 7.9 0 0 0-9.2 0z"/></svg>
+          <svg width="25" height="11" viewBox="0 0 25 11"><rect x=".5" y=".5" width="21" height="10" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="16" height="7" rx="1.5" fill="currentColor"/><path d="M23 4v3a2 2 0 0 0 0-3z" fill="currentColor" opacity=".5"/></svg>
+        </span>
+      </div>
+      <div class="navbar">
+        <div class="nav-btn"><svg width="19" height="14" viewBox="0 0 20 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1.5h18M1 7.5h18M1 13.5h18"/></svg></div>
+        <div class="title">工具箱</div>
+        <div class="nav-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+      </div>
+      <div class="content">
+        <div class="empty">
+          <div class="glyph">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="url(#g1)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366F1"/><stop offset="1" stop-color="#A855F7"/></linearGradient></defs>
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+            </svg>
+          </div>
+          <h3>还没有工具</h3>
+          <p>打开左上角 ☰ 侧边栏，点击底部的<br>「新建工具」开始创建第一个工具。</p>
+        </div>
+      </div>
+      <div style="height:28px;flex:0 0 auto"></div>
+      <div class="homebar"></div>
+    </div></div>
+  </div>
+
+  <!-- ========== ③ 侧边栏 ========== -->
+  <div class="item">
+    <div class="label"><b>③ 侧边栏</b><span class="badge">切换 / 搜索 / 左滑删除</span></div>
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>9:41</span>
+        <span class="icons">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 8.2 5.6 6.4a3.7 3.7 0 0 1 4.8 0L8 8.2zM3.4 4.6 1.2 2.9a10.5 10.5 0 0 1 13.6 0l-2.2 1.7a7.9 7.9 0 0 0-9.2 0z"/></svg>
+          <svg width="25" height="11" viewBox="0 0 25 11"><rect x=".5" y=".5" width="21" height="10" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="16" height="7" rx="1.5" fill="currentColor"/><path d="M23 4v3a2 2 0 0 0 0-3z" fill="currentColor" opacity=".5"/></svg>
+        </span>
+      </div>
+      <div class="navbar">
+        <div class="nav-btn"><svg width="19" height="14" viewBox="0 0 20 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1.5h18M1 7.5h18M1 13.5h18"/></svg></div>
+        <div class="title">计算器</div><div class="nav-btn ghost"></div>
+      </div>
+      <div class="content"></div>
+
+      <div class="overlay">
+        <div class="sidebar">
+          <div class="sidebar-head"><h2>工具箱</h2><span class="count-pill">5 个</span></div>
+          <div class="search">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            搜索工具
+          </div>
+          <div class="tool-list">
+            <div class="group-title">全部工具</div>
+            <div class="tool-row active"><span>计算器</span><span class="dot"></span></div>
+            <div class="tool-row"><span>单位换算</span></div>
+            <div class="tool-row"><span>番茄钟</span></div>
+            <div class="tool-row"><span>BMI 计算</span></div>
+            <div class="swipe-row">
+              <div class="del">删除</div>
+              <div class="front"><div class="tool-row" style="flex:1;background:transparent;height:48px"><span>汇率转换</span></div></div>
+            </div>
+          </div>
+          <div class="sidebar-foot">
+            <div class="btn-new" style="height:48px">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              新建工具
+            </div>
+          </div>
+          <div class="homebar" style="background:#111"></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ========== ④ 新建工具 · Step1 需求 ========== -->
+  <div class="item">
+    <div class="label"><b>④ 新建工具 · 第 1 步</b><span class="badge">输入需求</span></div>
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>9:41</span>
+        <span class="icons">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 8.2 5.6 6.4a3.7 3.7 0 0 1 4.8 0L8 8.2zM3.4 4.6 1.2 2.9a10.5 10.5 0 0 1 13.6 0l-2.2 1.7a7.9 7.9 0 0 0-9.2 0z"/></svg>
+          <svg width="25" height="11" viewBox="0 0 25 11"><rect x=".5" y=".5" width="21" height="10" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="16" height="7" rx="1.5" fill="currentColor"/><path d="M23 4v3a2 2 0 0 0 0-3z" fill="currentColor" opacity=".5"/></svg>
+        </span>
+      </div>
+      <div class="navbar">
+        <div class="nav-btn"><svg width="19" height="14" viewBox="0 0 20 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1.5h18M1 7.5h18M1 13.5h18"/></svg></div>
+        <div class="title">计算器</div><div class="nav-btn ghost"></div>
+      </div>
+      <div class="content" style="opacity:.35">
+        <div class="webview"><div class="calc">
+          <div class="calc-display"><div class="expr">128 × 4</div><div class="val">512</div></div>
+        </div></div>
+      </div>
+
+      <div class="sheet-wrap">
+        <div class="sheet">
+          <div class="grabber"></div>
+          <div class="sheet-nav">
+            <span class="a dim">取消</span>
+            <span class="t">新建工具</span>
+            <span class="a" style="opacity:.35">下一步</span>
+          </div>
+
+          <div class="steps">
+            <div class="step active"><i>1</i><span>描述需求</span></div>
+            <div class="sline"></div>
+            <div class="step"><i>2</i><span>导入内容</span></div>
+            <div class="sline"></div>
+            <div class="step"><i>3</i><span>预览应用</span></div>
+          </div>
+
+          <div class="form">
+            <div class="field-label">你想要一个什么工具？</div>
+            <div class="field" style="min-height:118px;line-height:1.6">
+              做一个计算器，支持加减乘除、百分比和正负号，深色模式下也要好看<span style="display:inline-block;width:2px;height:16px;background:var(--a1);vertical-align:-3px;margin-left:2px;animation:blink 1s step-end infinite"></span>
+            </div>
+            <style>@keyframes blink{50%{opacity:0}}</style>
+
+            <div class="field-label">工具名称（可选，留空则自动识别）</div>
+            <div class="field" style="color:var(--text3)">例如：计算器</div>
+
+            <div class="hint">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              <span>点击下方按钮，会按 <b>设置里的模板</b> 自动生成完整提示词并复制到剪贴板。</span>
+            </div>
+
+            <div class="btn btn-grad" style="width:100%">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+              生成提示词并复制
+            </div>
+          </div>
+          <div class="homebar"></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="flow-note">输入需求 → 一键生成并复制</div>
+  </div>
+
+  <!-- ========== ⑤ 新建工具 · Step2 导入 ========== -->
+  <div class="item">
+    <div class="label"><b>⑤ 新建工具 · 第 2 步</b><span class="badge">粘贴大模型返回</span></div>
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>9:41</span>
+        <span class="icons">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 8.2 5.6 6.4a3.7 3.7 0 0 1 4.8 0L8 8.2zM3.4 4.6 1.2 2.9a10.5 10.5 0 0 1 13.6 0l-2.2 1.7a7.9 7.9 0 0 0-9.2 0z"/></svg>
+          <svg width="25" height="11" viewBox="0 0 25 11"><rect x=".5" y=".5" width="21" height="10" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="16" height="7" rx="1.5" fill="currentColor"/><path d="M23 4v3a2 2 0 0 0 0-3z" fill="currentColor" opacity=".5"/></svg>
+        </span>
+      </div>
+      <div class="navbar">
+        <div class="nav-btn"><svg width="19" height="14" viewBox="0 0 20 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1.5h18M1 7.5h18M1 13.5h18"/></svg></div>
+        <div class="title">计算器</div><div class="nav-btn ghost"></div>
+      </div>
+      <div class="content" style="opacity:.35">
+        <div class="webview"><div class="calc">
+          <div class="calc-display"><div class="expr">128 × 4</div><div class="val">512</div></div>
+        </div></div>
+      </div>
+
+      <div class="sheet-wrap">
+        <div class="sheet">
+          <div class="grabber"></div>
+          <div class="sheet-nav">
+            <span class="a dim">返回</span>
+            <span class="t">新建工具</span>
+            <span class="a" style="opacity:.35">下一步</span>
+          </div>
+
+          <div class="steps">
+            <div class="step done"><i>✓</i><span>描述需求</span></div>
+            <div class="sline done"></div>
+            <div class="step active"><i>2</i><span>导入内容</span></div>
+            <div class="sline"></div>
+            <div class="step"><i>3</i><span>预览应用</span></div>
+          </div>
+
+          <div class="form">
+            <div class="copied-card">
+              <div class="ico">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+              <div>
+                <h4>提示词已复制</h4>
+                <p>打开任意大模型 App，粘贴发送后<br>把返回内容整体复制回来</p>
+              </div>
+            </div>
+
+            <div class="field-label">粘贴大模型返回的内容</div>
+            <div class="paste-area">{
+  <span class="k">"name"</span>: <span class="s">"计算器"</span>,
+  <span class="k">"html"</span>: <span class="s">"&lt;!DOCTYPE html&gt;&#10;&lt;html lang=\"zh\"&gt;&#10;  &lt;head&gt;…&lt;/head&gt;&#10;  &lt;body&gt;…&lt;/body&gt;&#10;&lt;/html&gt;"</span>
+}</div>
+
+            <div class="hint">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              <span>支持 JSON 或纯 HTML，会自动识别；名称为空时取 JSON 中的 name。</span>
+            </div>
+
+            <div class="btn btn-grad" style="width:100%">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+              预览效果
+            </div>
+          </div>
+          <div class="homebar"></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="flow-note">粘贴 → 解析 → 预览</div>
+  </div>
+
+  <!-- ========== ⑥ 新建工具 · Step3 预览 ========== -->
+  <div class="item">
+    <div class="label"><b>⑥ 新建工具 · 第 3 步</b><span class="badge">预览 → 应用</span></div>
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>9:41</span>
+        <span class="icons">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 8.2 5.6 6.4a3.7 3.7 0 0 1 4.8 0L8 8.2zM3.4 4.6 1.2 2.9a10.5 10.5 0 0 1 13.6 0l-2.2 1.7a7.9 7.9 0 0 0-9.2 0z"/></svg>
+          <svg width="25" height="11" viewBox="0 0 25 11"><rect x=".5" y=".5" width="21" height="10" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="16" height="7" rx="1.5" fill="currentColor"/><path d="M23 4v3a2 2 0 0 0 0-3z" fill="currentColor" opacity=".5"/></svg>
+        </span>
+      </div>
+
+      <div class="sheet-wrap" style="align-items:stretch">
+        <div class="sheet" style="height:100%;border-radius:30px 30px 0 0">
+          <div class="grabber"></div>
+          <div class="sheet-nav">
+            <span class="a dim">返回</span>
+            <span class="t">预览 · 计算器</span>
+            <span class="a strong" style="opacity:.95">应用</span>
+          </div>
+
+          <div class="steps">
+            <div class="step done"><i>✓</i><span>描述需求</span></div>
+            <div class="sline done"></div>
+            <div class="step done"><i>✓</i><span>导入内容</span></div>
+            <div class="sline done"></div>
+            <div class="step active"><i>3</i><span>预览应用</span></div>
+          </div>
+
+          <div class="content" style="padding-bottom:6px">
+            <div class="webview"><div class="calc">
+              <div class="calc-display"><div class="expr">&nbsp;</div><div class="val">0</div></div>
+              <div class="calc-grid">
+                <div class="calc-key fn">AC</div><div class="calc-key fn">±</div>
+                <div class="calc-key fn">%</div><div class="calc-key op">÷</div>
+                <div class="calc-key">7</div><div class="calc-key">8</div>
+                <div class="calc-key">9</div><div class="calc-key op">×</div>
+                <div class="calc-key">4</div><div class="calc-key">5</div>
+                <div class="calc-key">6</div><div class="calc-key op">−</div>
+                <div class="calc-key">1</div><div class="calc-key">2</div>
+                <div class="calc-key">3</div><div class="calc-key op">+</div>
+                <div class="calc-key wide">0</div><div class="calc-key">.</div>
+                <div class="calc-key op">=</div>
+              </div>
+            </div></div>
+          </div>
+
+          <div class="bottom-bar" style="display:flex;gap:10px;background:none;padding-top:4px">
+            <div class="btn btn-soft" style="flex:0 0 116px">返回修改</div>
+            <div class="btn btn-grad" style="flex:1">应用并保存</div>
+          </div>
+          <div class="homebar"></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="flow-note">应用后自动关闭并切换到新工具</div>
+  </div>
+
+  <!-- ========== ⑦ 设置页 ========== -->
+  <div class="item">
+    <div class="label"><b>⑦ 设置</b><span class="badge">模板管理 · 数据备份</span></div>
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>9:41</span>
+        <span class="icons">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 8.2 5.6 6.4a3.7 3.7 0 0 1 4.8 0L8 8.2zM3.4 4.6 1.2 2.9a10.5 10.5 0 0 1 13.6 0l-2.2 1.7a7.9 7.9 0 0 0-9.2 0z"/></svg>
+          <svg width="25" height="11" viewBox="0 0 25 11"><rect x=".5" y=".5" width="21" height="10" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="16" height="7" rx="1.5" fill="currentColor"/><path d="M23 4v3a2 2 0 0 0 0-3z" fill="currentColor" opacity=".5"/></svg>
+        </span>
+      </div>
+      <div class="navbar">
+        <div class="back">
+          <svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 1.5 2 9l7.5 7.5"/></svg>
+          工具
+        </div>
+        <div class="title">设置</div>
+        <div class="nav-btn ghost"></div>
+      </div>
+      <div class="content">
+        <div class="list-group">
+          <div class="list-title">提示词模板</div>
+          <div class="list-card">
+            <div class="cell">
+              <span>标准 HTML 生成</span>
+              <div class="r"><span class="tag">默认</span>
+                <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6 6.5l-4.5 5"/></svg>
+              </div><div class="sep"></div>
+            </div>
+            <div class="cell">
+              <span>极简风格模板</span>
+              <div class="r"><svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6 6.5l-4.5 5"/></svg></div>
+              <div class="sep"></div>
+            </div>
+            <div class="cell">
+              <span>数据可视化模板</span>
+              <div class="r"><svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6 6.5l-4.5 5"/></svg></div>
+            </div>
+          </div>
+          <div class="list-card" style="margin-top:10px">
+            <div class="cell add">＋ 新建模板</div>
+          </div>
+        </div>
+
+        <div class="list-group">
+          <div class="list-title">数据</div>
+          <div class="list-card">
+            <div class="cell">
+              <span>导出备份</span>
+              <div class="r">5 个工具 · 3 个模板</div><div class="sep"></div>
+            </div>
+            <div class="cell">
+              <span>导入备份</span>
+              <div class="r"><svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6 6.5l-4.5 5"/></svg></div>
+              <div class="sep"></div>
+            </div>
+            <div class="cell danger">
+              <span>清空全部数据</span>
+              <div class="r"><svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 6 6.5l-4.5 5"/></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="list-group" style="margin-bottom:34px">
+          <div class="list-title">关于</div>
+          <div class="list-card">
+            <div class="cell"><span>版本</span><div class="r">1.0.0</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div>
+  </div>
+
+  <!-- ========== ⑧ 模板编辑 ========== -->
+  <div class="item">
+    <div class="label"><b>⑧ 提示词模板编辑</b><span class="badge">{{requirement}} 变量</span></div>
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>9:41</span>
+        <span class="icons">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 8.2 5.6 6.4a3.7 3.7 0 0 1 4.8 0L8 8.2zM3.4 4.6 1.2 2.9a10.5 10.5 0 0 1 13.6 0l-2.2 1.7a7.9 7.9 0 0 0-9.2 0z"/></svg>
+          <svg width="25" height="11" viewBox="0 0 25 11"><rect x=".5" y=".5" width="21" height="10" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="16" height="7" rx="1.5" fill="currentColor"/><path d="M23 4v3a2 2 0 0 0 0-3z" fill="currentColor" opacity=".5"/></svg>
+        </span>
+      </div>
+      <div class="navbar">
+        <div class="back">
+          <svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 1.5 2 9l7.5 7.5"/></svg>
+          设置
+        </div>
+        <div class="title">编辑模板</div>
+        <span style="font-size:15.5px;font-weight:650;color:var(--a-text);padding-right:8px;cursor:pointer">保存</span>
+      </div>
+      <div class="content" style="display:flex;flex-direction:column">
+        <div style="padding:18px 16px 0">
+          <div class="field-label">模板名称</div>
+          <div class="field" style="margin-bottom:0">标准 HTML 生成</div>
+        </div>
+        <div class="field-label" style="padding:20px 19px 8px">模板正文</div>
+        <div class="editor">你是一名资深前端工程师。请根据下面的需求，生成一个 iOS 移动端工具页面。
+
+<span class="hl">【需求】</span>
+<span class="var">{{requirement}}</span>
+
+<span class="hl">【输出要求】</span>
+仅返回一个 JSON 对象，不要解释、不要 Markdown 代码块：
+{
+  "name": "工具名称",
+  "html": "完整的单文件 HTML 字符串"
+}
+
+<span class="hl">【HTML 规范】</span>
+1. 单文件自包含，CSS/JS 全部内联；
+2. 含 viewport meta，适配移动端；
+3. 适配 prefers-color-scheme 深浅色；
+4. 宽度 100%，无横向滚动，按钮 ≥44px；
+5. 大圆角、柔和阴影、系统字体；
+6. 底部预留安全区；
+7. 按需引用 CDN 图表库。
+</div>
+        <div class="hint" style="margin:0 16px 20px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span><b>{{requirement}}</b> 会在生成时自动替换为你在新建工具里填写的需求。</span>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div>
+  </div>
+
+  <!-- ========== ⑨ 反馈态 ========== -->
+  <div class="item">
+    <div class="label"><b>⑨ 反馈态</b><span class="badge">Toast · 删除确认</span></div>
+    <div class="device"><div class="notch"></div><div class="screen">
+      <div class="statusbar"><span>9:41</span>
+        <span class="icons">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 8.2 5.6 6.4a3.7 3.7 0 0 1 4.8 0L8 8.2zM3.4 4.6 1.2 2.9a10.5 10.5 0 0 1 13.6 0l-2.2 1.7a7.9 7.9 0 0 0-9.2 0z"/></svg>
+          <svg width="25" height="11" viewBox="0 0 25 11"><rect x=".5" y=".5" width="21" height="10" rx="3" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="16" height="7" rx="1.5" fill="currentColor"/><path d="M23 4v3a2 2 0 0 0 0-3z" fill="currentColor" opacity=".5"/></svg>
+        </span>
+      </div>
+      <div class="navbar">
+        <div class="nav-btn"><svg width="19" height="14" viewBox="0 0 20 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1.5h18M1 7.5h18M1 13.5h18"/></svg></div>
+        <div class="title">计算器</div><div class="nav-btn ghost"></div>
+      </div>
+      <div class="content" style="opacity:.35">
+        <div class="webview"><div class="calc">
+          <div class="calc-display"><div class="expr">128 × 4</div><div class="val">512</div></div>
+        </div></div>
+      </div>
+      <div style="height:28px;flex:0 0 auto"></div>
+
+      <div class="toast">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        提示词已复制到剪贴板
+      </div>
+
+      <div style="position:absolute;inset:0;z-index:90;background:var(--mask);display:flex;align-items:flex-end;padding:10px 10px 24px;backdrop-filter:blur(3px)">
+        <div style="width:100%;display:flex;flex-direction:column;gap:9px">
+          <div style="background:var(--surface);border-radius:22px;overflow:hidden;border:1px solid var(--line)">
+            <div style="padding:16px;text-align:center;font-size:12.5px;color:var(--text2);line-height:1.6;border-bottom:1px solid var(--line)">确定要删除「汇率转换」吗？<br>此操作不可撤销。</div>
+            <div style="padding:17px;text-align:center;font-size:16.5px;color:var(--danger);font-weight:650">删除工具</div>
+          </div>
+          <div style="background:var(--surface);border-radius:22px;padding:17px;text-align:center;font-size:16.5px;font-weight:650;color:var(--a-text);border:1px solid var(--line)">取消</div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div>
+  </div>
+
+</div>
+</body>
+</html>
+

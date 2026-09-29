@@ -1,0 +1,16 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_locals: true
+    avoid_print: true
+    use_super_parameters: true
+
+analyzer:
+  errors:
+    # 让 CI 的 flutter analyze 只对真正的错误失败
+    todo: ignore
+  exclude:
+    - build/**

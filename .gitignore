@@ -1,0 +1,24 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+.vscode/
+
+# 平台目录由 CI 生成（flutter create --platforms=ios .）
+/ios/
+/android/
+/macos/
+/linux/
+/windows/
+/web/
+
+# 图标由 CI 现场生成，不入库
+/assets/icon/
+
+# 其它
+*.log
+.DS_Store
