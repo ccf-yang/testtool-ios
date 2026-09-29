@@ -91,6 +91,8 @@ class Sidebar extends ConsumerWidget {
                       child: TextField(
                         onChanged: (String v) =>
                             ref.read(searchQueryProvider.notifier).set(v),
+                        onTapOutside: (_) =>
+                            FocusManager.instance.primaryFocus?.unfocus(),
                         style: TextStyle(fontSize: 14.5, color: palette.text),
                         decoration: InputDecoration(
                           isDense: true,

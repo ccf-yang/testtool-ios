@@ -66,6 +66,7 @@ class AppTextField extends StatelessWidget {
         controller: controller,
         onChanged: onChanged,
         autofocus: autofocus,
+        onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
         minLines: expands ? null : minLines,
         maxLines: expands ? null : maxLines,
         expands: expands,
